@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SciSolve | AI Science Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$$', '$$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        
+        :root {
+            --primary: #6366f1;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --border-radius: 16px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --bg: #ffffff;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark-mode {
+            --primary: #818cf8;
+            --light: #1e293b;
+            --dark: #f1f5f9;
+            --gray: #94a3b8;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+            transition: var(--transition);
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 32px;
+            transition: var(--transition);
+            position: relative;
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            font-size: 1.125rem;
+        }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            font-size: 0.875rem;
+        }
+        .undo {
+            background: var(--primary);
+        }
+        .undo:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            padding: 2px;
+            border-radius: 8px;
+            border: 2px solid var(--light);
+        }
+        input[type="range"] {
+            width: 120px;
+            accent-color: var(--primary);
+        }
+        canvas {
+            width: 100%;
+            height: 360px;
+            border: 2px dashed var(--gray);
+            border-radius: var(--border-radius);
+            background: var(--bg);
+            touch-action: none;
+            margin: 1rem 0;
+            transition: var(--transition);
+        }
+        .results {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .math {
+            font-size: 1.1rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin: 1rem 0;
+            overflow-x: auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            line-height: 1.8;
+        }
+        .math h3, .math h4 {
+            color: var(--primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .math strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .math p {
+            margin: 0.5rem 0;
+        }
+        .math ul, .math ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .loading {
+            display: none;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .theme-toggle {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: var(--light);
+            border: none;
+            border-radius: 10px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.25rem;
+        }
+        .canvas-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--gray);
+            pointer-events: none;
+            font-size: 1.125rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.875rem; }
+            .theme-toggle { top: 16px; right: 16px; }
+        }
+        /* Hamburger Menu Styles */
+        .menu-toggle {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 30px;
+            height: 25px;
+            padding: 0;
+            background: none;
+            border: none;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+        .menu-toggle.open {
+            transform: rotate(90deg);
+        }
+        .menu-toggle span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: var(--text);
+            border-radius: 3px;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .menu-toggle.open span:nth-child(1) {
+            transform: translateY(11px) rotate(45deg);
+        }
+        .menu-toggle.open span:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-toggle.open span:nth-child(3) {
+            transform: translateY(-11px) rotate(-45deg);
+        }
+        .menu {
+            position: absolute;
+            top: 60px;
+            left: 24px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 9;
+            transition: var(--transition);
+        }
+        .menu.open {
+            display: flex;
+        }
+        .menu button {
+            background: none;
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        .menu button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        #history-display, #saved-solutions-display, #about-us-display {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--light);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="menu-toggle" id="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="menu" id="menu">
+            <button id="history-btn">History</button>
+            <button id="saved-solutions-btn">Saved Solutions</button>
+            <button id="about-us-btn">About Us</button>
+        </div>
+        <button class="theme-toggle" id="theme-toggle">🌓</button>
+        <h1>SciSolve</h1>
+        <p class="subtitle">AI-Powered Math, Physics & Chemistry Solver</p>
+        <div class="toolbar">
+            <button id="clear-btn">🗑️ Clear Canvas</button>
+            <input type="color" id="color-picker" value="#6366f1" title="Pen Color">
+            <input type="range" id="brush-size" min="1" max="20" value="3" title="Brush Size">
+            <button id="eraser-btn">🧽 Eraser</button>
+            <button id="undo-btn" disabled>↩️ Undo</button>
+            <button id="calculate-btn">🔍 Solve Equation</button>
+            <button id="save-solution-btn">💾 Save Solution</button>
+        </div>
+        <div style="position: relative;">
+            <canvas id="drawing-canvas"></canvas>
+            <div class="canvas-placeholder" id="canvas-placeholder">Draw or upload Math, Physics, or Chemistry equations to solve</div>
+        </div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+        <div class="results">
+            <h3 style="margin: 0 0 1rem; font-size: 1.25rem;">Solution</h3>
+            <div id="latex-output" class="math">Equation will appear here</div>
+            <div id="solution-output" class="math"></div>
+        </div>
+        <div id="history-display">
+            <h3>Calculation History</h3>
+            <button id="clear-history-btn">Clear History</button>
+            <div id="history-content"></div>
+        </div>
+        <div id="saved-solutions-display">
+            <h3>Saved Solutions</h3>
+            <button id="clear-saved-btn">Clear Saved Solutions</button>
+            <div id="saved-solutions-content"></div>
+        </div>
+        <div id="about-us-display">
+            <h3>About Us</h3>
+            <p>SciSolve is an AI-powered tool that bridges the gap between handwritten problem-solving and instant solutions. Designed for students, educators, and self-learners, our platform allows users to simply draw math, physics, or chemistry problems on a digital canvas, and receive step-by-step solutions generated by cutting-edge AI.
+            We combine handwriting recognition with natural language understanding using the Gemini API, allowing SciSolve to understand and solve even complex equations and conceptual problems in real time. Our goal is to make learning more intuitive, interactive, and accessible—one sketch at a time.
+            Whether you're working on algebra, calculus, physics mechanics, or chemistry, SciSolve is your intelligent companion for solving, learning, and growing..<br> Made by Pranav and Team</p>
+        </div>
+    </div>
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        const clearBtn = document.getElementById('clear-btn');
+        const colorPicker = document.getElementById('color-picker');
+        const brushSize = document.getElementById('brush-size');
+        const eraserBtn = document.getElementById('eraser-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const latexOutput = document.getElementById('latex-output');
+        const solutionOutput = document.getElementById('solution-output');
+        const loading = document.getElementById('loading');
+        const themeToggle = document.getElementById('theme-toggle');
+        const canvasPlaceholder = document.getElementById('canvas-placeholder');
+        const saveSolutionBtn = document.getElementById('save-solution-btn');
+
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.offsetWidth;
+            canvas.height = 360;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+        // Drawing variables
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let drawingHistory = [];
+        let currentStep = -1;
+        // Save the initial canvas state
+        function saveDrawingState() {
+            currentStep++;
+            if (currentStep < drawingHistory.length) {
+                drawingHistory.length = currentStep;
+            }
+            drawingHistory.push(canvas.toDataURL());
+        }
+        let currentColor = colorPicker.value;
+        let currentSize = brushSize.value;
+        let isErasing = false;
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX || e.touches[0].clientX - canvas.offsetLeft,
+                              e.offsetY || e.touches[0].clientY - canvas.offsetTop];
+            // Save state before starting a new stroke
+            saveDrawingState();
+        }
+        function draw(e) {
+            if (!isDrawing) return;
+            ctx.strokeStyle = isErasing ? 'white' : currentColor;
+            ctx.lineWidth = currentSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            const currentX = e.offsetX || e.touches[0].clientX - canvas.offsetLeft;
+            const currentY = e.offsetY || e.touches[0].clientY - canvas.offsetTop;
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            [lastX, lastY] = [currentX, currentY];
+            updateCanvasPlaceholder();
+        }
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                updateCanvasPlaceholder();
+                // Enable undo button after drawing
+                document.getElementById('undo-btn').disabled = false;
+            }
+        }
+        // Event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        // Initialize undo button
+        const undoBtn = document.getElementById('undo-btn');
+        undoBtn.addEventListener('click', () => {
+            if (currentStep > 0) {
+                currentStep--;
+                const img = new Image();
+                img.src = drawingHistory[currentStep];
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    updateCanvasPlaceholder();
+                    undoBtn.disabled = currentStep === 0;
+                };
+            }
+        });
+        // Clear canvas functionality
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            clearCanvas();
+        });
+        function clearCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            updateCanvasPlaceholder();
+            // Reset history after clearing
+            drawingHistory = [];
+            currentStep = -1;
+            saveDrawingState();
+            undoBtn.disabled = true;
+        }
+        // Save initial canvas state
+        saveDrawingState();
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startDrawing(e);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            draw(e);
+        });
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopDrawing();
+        });
+        // Toolbar functions
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            latexOutput.textContent = 'Equation will appear here';
+            solutionOutput.textContent = '';
+            updateCanvasPlaceholder();
+        });
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+            isErasing = false;
+            eraserBtn.textContent = '🧽 Eraser';
+        });
+        brushSize.addEventListener('input', (e) => {
+            currentSize = e.target.value;
+        });
+        eraserBtn.addEventListener('click', () => {
+            isErasing = !isErasing;
+            eraserBtn.textContent = isErasing ? '✏️ Pen' : '🧽 Eraser';
+        });
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            themeToggle.textContent = document.body.classList.contains('dark-mode') ? '🌞' : '🌓';
+        });
+        // Canvas placeholder logic
+        function updateCanvasPlaceholder() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const isEmpty = Array.from(imageData).every((v, i) =>
+                i % 4 === 3 ? v === 0 || v === 255 : v === 255
+            );
+            canvasPlaceholder.style.display = isEmpty ? 'block' : 'none';
+        }
+        // Backend API Integration
+        calculateBtn.addEventListener('click', async () => {
+            loading.style.display = 'flex';
+            try {
+                // Convert canvas to base64
+                const imageData = canvas.toDataURL('image/png');
+                
+                console.log('Sending request to backend API...');
+                const response = await fetch('http://localhost:8000/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_data: imageData
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        body: errorText
+                    });
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Backend Response:', data);
+                
+                if (!data.solution) {
+                    throw new Error('No solution returned from backend');
+                }
+                
+                const solution = data.solution;
+                
+                // First, protect $$...$$ blocks by temporarily replacing them
+                const mathBlocks = [];
+                let tempSolution = solution.replace(/\$\$(.*?)\$\$/g, (match, content) => {
+                    mathBlocks.push(match);
+                    return `__MATH_${mathBlocks.length - 1}__`;
+                });
+                
+                // Remove any remaining single dollar signs from regular text
+                tempSolution = tempSolution.replace(/\$/g, '');
+                
+                // Restore the $$...$$ blocks
+                mathBlocks.forEach((block, index) => {
+                    tempSolution = tempSolution.replace(`__MATH_${index}__`, block);
+                });
+                
+                // Convert markdown-style formatting to HTML
+                let formattedSolution = tempSolution
+                    // Convert **bold** to <strong>
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    // Convert numbered steps
+                    .replace(/\*\*Step (\d+):\*\*/g, '<br><strong>Step $1:</strong>')
+                    // Add line breaks for sections
+                    .replace(/📚 \*\*SUBJECT:\*\*/g, '<h3>📚 SUBJECT:</h3>')
+                    .replace(/📝 \*\*PROBLEM:\*\*/g, '<h3>📝 PROBLEM:</h3>')
+                    .replace(/💡 \*\*SOLUTION:\*\*/g, '<h3>💡 SOLUTION:</h3>')
+                    .replace(/✅ \*\*FINAL ANSWER:\*\*/g, '<h3>✅ FINAL ANSWER:</h3>')
+                    .replace(/📖 \*\*EXPLANATION:\*\*/g, '<h3>📖 EXPLANATION:</h3>')
+                    // Add line breaks for better readability
+                    .replace(/\n/g, '<br>');
+                
+                latexOutput.innerHTML = formattedSolution;
+                solutionOutput.innerHTML = '';
+                
+                // Trigger MathJax to render LaTeX
+                if (window.MathJax) {
+                    MathJax.typesetPromise([latexOutput]).catch((err) => console.error('MathJax error:', err));
+                }
+                //Save to history
+                saveToHistory(imageData.split(',')[1], formattedSolution);
+
+            } catch (error) {
+                console.error('Error:', error);
+                latexOutput.textContent = `Error: ${error.message}`;
+                // Log the full error details to console for debugging
+                console.error('Full error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+        //save solution
+        saveSolutionBtn.addEventListener('click', ()=>{
+            const imageData = canvas.toDataURL('image/png').split(',')[1];
+            saveSolution(imageData, latexOutput.innerHTML);
+        });
+
+        // Menu Toggle Logic
+        const menuToggle = document.getElementById('menu-toggle');
+        const menu = document.getElementById('menu');
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('open');
+            menu.classList.toggle('open');
+        });
+        // Menu Item Logic
+        const historyBtn = document.getElementById('history-btn');
+        const savedSolutionsBtn = document.getElementById('saved-solutions-btn');
+        const aboutUsBtn = document.getElementById('about-us-btn');
+        const historyDisplay = document.getElementById('history-display');
+        const savedSolutionsDisplay = document.getElementById('saved-solutions-display');
+        const aboutUsDisplay = document.getElementById('about-us-display');
+        const historyContent = document.getElementById('history-content');
+        const savedSolutionsContent = document.getElementById('saved-solutions-content');
+        function hideAllDisplays() {
+            historyDisplay.style.display = 'none';
+            savedSolutionsDisplay.style.display = 'none';
+            aboutUsDisplay.style.display = 'none';
+        }
+        historyBtn.addEventListener('click', () => {
+            hideAllDisplays();
+            historyDisplay.style.display = 'block';
+            displayHistory();
+        });
+        savedSolutionsBtn.addEventListener('click', () => {
+            hideAllDisplays();
+            savedSolutionsDisplay.style.display = 'block';
+            displaySavedSolutions();
+        });
+        aboutUsBtn.addEventListener('click', () => {
+            hideAllDisplays();
+            aboutUsDisplay.style.display = 'block';
+        });
+
+        //Local Storage Functions
+        function saveToHistory(imageData, solution){
+            let history = JSON.parse(localStorage.getItem('sciSolveHistory')) || [];
+            history.push({imageData, solution, timestamp: Date.now()});
+            localStorage.setItem('sciSolveHistory', JSON.stringify(history));
+            displayHistory();
+        }
+        function displayHistory(){
+            let history = JSON.parse(localStorage.getItem('sciSolveHistory')) || [];
+            historyContent.innerHTML = history.map(item => `
+                <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                    <img src="data:image/png;base64,${item.imageData}" style="max-width: 100%; height: auto;">
+                    <p>${item.solution}</p>
+                </div>
+            `).join('');
+        }
+        function saveSolution(imageData, solution){
+            let saved = JSON.parse(localStorage.getItem('sciSolveSavedSolutions')) || [];
+            saved.push({imageData, solution, timestamp: Date.now()});
+            localStorage.setItem('sciSolveSavedSolutions', JSON.stringify(saved));
+            displaySavedSolutions();
+        }
+        function displaySavedSolutions(){
+            let saved = JSON.parse(localStorage.getItem('sciSolveSavedSolutions')) || [];
+            savedSolutionsContent.innerHTML = saved.map(item => `
+                <div style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+                    <img src="data:image/png;base64,${item.imageData}" style="max-width: 100%; height: auto;">
+                    <p>${item.solution}</p>
+                </div>
+            `).join('');
+        }
+
+        // Clear History Button Functionality
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
+            localStorage.removeItem('sciSolveHistory');
+            displayHistory();
+        });
+
+        // Clear Saved Solutions Button Functionality
+        document.getElementById('clear-saved-btn').addEventListener('click', () => {
+            localStorage.removeItem('sciSolveSavedSolutions');
+            displaySavedSolutions();
+        });
+
+        // Initial setup
+        resizeCanvas();
+        updateCanvasPlaceholder();
+        displayHistory();
+        displaySavedSolutions();
+
+    </script>
+</body>
+</html>
